@@ -1,7 +1,7 @@
 import {Interpreter} from './interpreter.js';
 import {Renderer} from './renderer.js';
 
-let speed = 50;
+let speed = 1;
 
 const get = document.getElementById.bind(document);
 const startStopButton = get('start-stop');
@@ -18,7 +18,7 @@ get('compile').addEventListener('click', () => {
 		clearInterval(interval);
 		interval = undefined;
 	}
-	program = new Interpreter(get('script').value);
+	program = new Interpreter(get('script').value, prompt.bind(window));
 	renderer = new Renderer(program, programDisplay, stackDisplay, stdout);
 
 	renderer.initialRender();
@@ -33,6 +33,10 @@ function restartInterval() {
 	interval = setInterval(() => {
 		program.step();
 		renderer.renderTick();
+
+		if (program.halted) {
+			clearInterval(interval);
+		}
 	}, speed);
 }
 

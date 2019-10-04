@@ -4,7 +4,7 @@ export const DOWN = 2;
 export const LEFT = 3;
 
 export class Interpreter {
-	constructor(script) {
+	constructor(script, prompt) {
 		this.program = [];
 		this.x = 0;
 		this.y = 0;
@@ -31,6 +31,8 @@ export class Interpreter {
 				this.program.push(Array.from(line));
 			}
 		});
+
+		this.prompt = prompt;
 	}
 
 	nextPosition() {
@@ -52,7 +54,8 @@ export class Interpreter {
 				break;
 		}
 
-		return [newX, newY];
+		this.x = newX;
+		this.y = newY;
 	}
 
 	step() {
@@ -60,22 +63,20 @@ export class Interpreter {
 			return;
 		}
 
-		const [newX, newY] = this.nextPosition();
-		this.x = newX;
-		this.y = newY;
-
-		const nextToken = this.program[newY][newX];
+		const token = this.program[this.y][this.x];
 
 		if (this.stringMode) {
-			if (nextToken === '"') {
+			if (token === '"') {
 				this.stringMode = false;
 			} else {
-				this.stack.push(nextToken);
+				this.stack.push(token.charCodeAt(0));
 			}
+
+			this.nextPosition();
 			return;
 		}
 
-		switch (nextToken) {
+		switch (token) {
 			case 'v': this.direction = DOWN; break;
 			case '>': this.direction = RIGHT; break;
 			case '^': this.direction = UP; break;
@@ -138,6 +139,7 @@ export class Interpreter {
 				// Greater than: Pop a and b, then push 1 if b>a, otherwise zero
 				const a = this.stack.pop();
 				const b = this.stack.pop();
+
 				if (b > a) {
 					this.stack.push(1);
 				} else {
@@ -176,9 +178,9 @@ export class Interpreter {
 				// Pop a value; move down if value=0, up otherwise
 				const a = this.stack.pop();
 				if (a === 0) {
-					this.direction = UP;
-				} else {
 					this.direction = DOWN;
+				} else {
+					this.direction = UP;
 				}
 				break;
 			}
@@ -213,26 +215,19 @@ export class Interpreter {
 			case '.': {
 				// Pop value and output as an integer followed by a space
 				const a = this.stack.pop();
-				this.stdout += a;
+				this.stdout += a + ' ';
 				break;
 			}
 			case ',': {
 				// Pop value and output as ASCII character
 				const a = this.stack.pop();
-
-				if (Number.isInteger(a)) {
-					this.stdout += String.fromCharCode(a);
-				} else {
-					this.stdout += a;
-				}
+				this.stdout += String.fromCharCode(a);
 				break;
 			}
 
 			case '#': {
 				// Bridge: Skip next cell
-				const [skippedX, skippedY] = this.nextPosition();
-				this.x = skippedX;
-				this.y = skippedY;
+				this.nextPosition();
 				break;
 			}
 
@@ -242,36 +237,46 @@ export class Interpreter {
 				const x = this.stack.pop();
 				const v = this.stack.pop();
 
-				this.program[y][x] = v;
+				this.program[y][x] = String.fromCharCode(v);
 				break;
 			}
 			case 'g': {
 				// A "get" call (a way to retrieve data in storage). Pop y and x, then push ASCII value of the character at that position in the program
 				const y = this.stack.pop();
 				const x = this.stack.pop();
-				const v = this.program[y][x];
-				this.stack.push(v);
+
+				if (x < this.width && y < this.height) {
+					const v = this.program[y][x];
+					this.stack.push(v.charCodeAt(0));
+				} else {
+					this.stack.push(0);
+				}
 				break;
 			}
 
 			case '&': {
 				// Ask user for a number and push it
-				const number = prompt('Enter a number');
+				const number = this.prompt('Enter a number');
 				const converted = Number.parseInt(number);
 				this.stack.push(converted);
 				break;
 			}
 			case '~': {
 				// Ask user for a character and push its ASCII value
-				const char = prompt('Enter a character')[0];
-				this.stack.push(char);
+				const char = this.prompt('Enter a character');
+
+				if (char.length === 0) {
+					throw new Error('Must enter a character');
+				}
+
+				this.stack.push(char.charCodeAt(0));
 				break;
 			}
 
 			case '@': {
 				// End program
 				this.halted = true;
-				break;
+				return;
 			}
 
 			case '"': {
@@ -281,5 +286,7 @@ export class Interpreter {
 
 			default: break;
 		}
+
+		this.nextPosition();
 	}
 }
