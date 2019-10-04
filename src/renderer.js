@@ -1,18 +1,28 @@
 export class Renderer {
-	constructor(interpreter, programDisplay, stackDisplay, stdoutDisplay) {
+	constructor(interpreter, programDisplay, stackDisplay, stdoutDisplay, statsDisplay) {
 		this.interpreter = interpreter;
 		this.display = {
 			program: programDisplay,
 			stack: stackDisplay,
-			stdout: stdoutDisplay
+			stdout: stdoutDisplay,
+			stats: statsDisplay
 		};
+		this.ticks = 0;
 	}
 
 	initialRender() {
 		this.renderTick();
 	}
 
-	renderTick() {
+	renderTick(timestamp) {
+		// const table = document.createElement('table');
+		// table.classList.add('table', 'table-dark', 'table-bordered');
+		//
+		// const tbody = document.createElement('tbody');
+		// table.appendChild(tbody);
+		//
+		// this.tableContents = [];
+
 		let table = `<table class="table table-dark table-bordered"><tbody>`;
 
 		for (let i = 0; i < this.interpreter.program.length; i++) {
@@ -38,5 +48,17 @@ export class Renderer {
 		this.display.stack.innerHTML = stack;
 
 		this.display.stdout.innerHTML = this.interpreter.stdout;
+
+		if (!this.start) {
+			this.start = performance.now();
+		}
+
+		if (this.ticks % 50 === 0) {
+			const elapsed = (performance.now() - this.start) / 1000;
+			const rate = this.ticks / elapsed;
+			this.display.stats.innerText = `${rate.toFixed(0)} OP/S`;
+		}
+
+		this.ticks++;
 	}
 }

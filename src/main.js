@@ -8,6 +8,7 @@ const startStopButton = get('start-stop');
 const programDisplay = get('program-display');
 const stackDisplay = get('stack-display');
 const stdout = get('stdout');
+const stats = get('stats');
 
 let program;
 let renderer;
@@ -19,7 +20,7 @@ get('compile').addEventListener('click', () => {
 		interval = undefined;
 	}
 	program = new Interpreter(get('script').value, prompt.bind(window));
-	renderer = new Renderer(program, programDisplay, stackDisplay, stdout);
+	renderer = new Renderer(program, programDisplay, stackDisplay, stdout, stats);
 
 	renderer.initialRender();
 	startStopButton.innerText = 'Start';
@@ -79,12 +80,10 @@ get('run').addEventListener('click', () => {
 	}
 	const finish = new Date();
 
-	console.log(count, finish - start);
-
 	const ms = finish - start;
 	const hz = count / ms;
 
-	console.log(hz);
+	stats.innerText = `Took ${ms.toFixed(2)}ms, running at ${hz.toFixed(0)} IPS`;
 
 	renderer.renderTick();
 });
