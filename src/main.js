@@ -70,6 +70,25 @@ get('slow-down').addEventListener('click', () => {
 	restartInterval();
 });
 
+get('run').addEventListener('click', () => {
+	let count = 0;
+	const start = new Date();
+	while (!program.halted) {
+		program.step();
+		count++;
+	}
+	const finish = new Date();
+
+	console.log(count, finish - start);
+
+	const ms = finish - start;
+	const hz = count / ms;
+
+	console.log(hz);
+
+	renderer.renderTick();
+});
+
 document.addEventListener('DOMContentLoaded', () => {
 	get('compile').click();
 });

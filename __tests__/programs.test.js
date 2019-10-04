@@ -137,8 +137,24 @@ describe('Interpreter', () => {
 		prompt.mockReturnValueOnce('9');
 		const {steps, interp} = await runTestCase('dragon-curve.bf', prompt, 100000000);
 
-		expect(readableString(interp.stdout)).toEqual('0 1 1 2 3 5 8 13 21 34 55 89 144 233 377 ');
-		expect(interp.stack).toEqual([193634, 14]);
-		expect(steps).toBe(587);
+		const lines = interp.stdout.split(/\n/g);
+
+		expect(lines[1]).toEqual(`     _       _                                  `);
+		expect(lines[2]).toEqual(`    |_|_    |_|_                                `);
+		expect(lines[3]).toEqual(` _   _|_|_   _|_|                               `);
+		expect(lines[4]).toEqual(`|_|_| |_| |_|_|_                     _   _      `);
+		expect(lines[5]).toEqual(` _|        _|_|_|    _             _| |_|_|     `);
+		expect(lines[6]).toEqual(`|_        |_| |_    |_|_          |_    |_   _  `);
+		expect(lines[7]).toEqual(`  |_|          _|_   _|_|                _|_|_| `);
+		expect(lines[8]).toEqual(`             _|_|_|_|_|_                |_|_|   `);
+		expect(lines[9]).toEqual(`           _|_|_|_|_|_|_|    _       _   _|     `);
+		expect(lines[10]).toEqual(`          |_| |_|_|_|_|_    |_|_    |_|_|_   _  `);
+		expect(lines[11]).toEqual(`               _|_|_|_|_|_   _|_|_   _|_|_|_|_| `);
+		expect(lines[12]).toEqual(`             _|_|_|_| |_| |_|_|_|_|_| |_| |_|   `);
+		expect(lines[13]).toEqual(`           _|_|_|_|        _|_|_|_|             `);
+		expect(lines[14]).toEqual(`          |_| |_|_   _    |_| |_|_   _          `);
+		expect(lines[15]).toEqual(`               _|_|_|_|        _|_|_|_|         `);
+		expect(lines[16]).toEqual(`              |_| |_|         |_| |_|           `);
+		expect(steps).toBe(1176462);
 	});
 });
