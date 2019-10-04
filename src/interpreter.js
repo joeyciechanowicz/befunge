@@ -33,11 +33,7 @@ export class Interpreter {
 		});
 	}
 
-	step() {
-		if (this.halted) {
-			return;
-		}
-
+	nextPosition() {
 		let newX = this.x;
 		let newY = this.y;
 
@@ -56,8 +52,18 @@ export class Interpreter {
 				break;
 		}
 
+		return [newX, newY];
+	}
+
+	step() {
+		if (this.halted) {
+			return;
+		}
+
+		const [newX, newY] = this.nextPosition();
 		this.x = newX;
 		this.y = newY;
+
 		const nextToken = this.program[newY][newX];
 
 		if (this.stringMode) {
@@ -179,7 +185,14 @@ export class Interpreter {
 
 			case ':': {
 				// Duplicate value on top of the stack
-				this.stack.push(this.stack[this.stack.length - 1]);
+				const a = this.stack.pop();
+				if (a === undefined) {
+					this.stack.push(0);
+					this.stack.push(0);
+				} else {
+					this.stack.push(a);
+					this.stack.push(a);
+				}
 				break;
 			}
 
@@ -217,16 +230,28 @@ export class Interpreter {
 
 			case '#': {
 				// Bridge: Skip next cell
-				throw new Error('not implemented');
+				const [skippedX, skippedY] = this.nextPosition();
+				this.x = skippedX;
+				this.y = skippedY;
+				break;
 			}
 
 			case 'p': {
 				// A "put" call (a way to store a value for later use). Pop y, x, and v, then change the character at (x,y) in the program to the character with ASCII value v
-				throw new Error('not implemented');
+				const y = this.stack.pop();
+				const x = this.stack.pop();
+				const v = this.stack.pop();
+
+				this.program[y][x] = v;
+				break;
 			}
 			case 'g': {
 				// A "get" call (a way to retrieve data in storage). Pop y and x, then push ASCII value of the character at that position in the program
-				throw new Error('not implemented');
+				const y = this.stack.pop();
+				const x = this.stack.pop();
+				const v = this.program[y][x];
+				this.stack.push(v);
+				break;
 			}
 
 			case '&': {
