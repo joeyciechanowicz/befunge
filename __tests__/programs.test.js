@@ -57,7 +57,7 @@ function readableString(str) {
 describe('Interpreter', () => {
 
 	test('hello world', async () => {
-		const {steps, interp} = await runTestCase('hello-world.befunge');
+		const {steps, interp} = await runTestCase('hello-world.bf');
 
 		expect(interp.stdout).toEqual('Hello World!');
 		expect(interp.stack).toEqual([]);
@@ -65,7 +65,7 @@ describe('Interpreter', () => {
 	});
 
 	test('hello world single line', async () => {
-		const {steps, interp} = await runTestCase('hello-world-2.befunge');
+		const {steps, interp} = await runTestCase('hello-world-2.bf');
 
 		expect(readableString(interp.stdout)).toEqual('Hello, World!\\n');
 		expect(interp.stack).toEqual([0]);
@@ -76,7 +76,7 @@ describe('Interpreter', () => {
 		const prompt = jest.fn();
 		prompt.mockReturnValueOnce('a');
 
-		const {steps, interp} = await runTestCase('prompt.befunge', prompt);
+		const {steps, interp} = await runTestCase('prompt.bf', prompt);
 
 		expect(readableString(interp.stdout)).toEqual('a');
 		expect(prompt).toHaveBeenCalledTimes(1);
@@ -87,7 +87,7 @@ describe('Interpreter', () => {
 		const prompt = jest.fn();
 		prompt.mockReturnValueOnce('5');
 
-		const {steps, interp} = await runTestCase('factorial.befunge', prompt);
+		const {steps, interp} = await runTestCase('factorial.bf', prompt);
 
 		expect(readableString(interp.stdout)).toEqual('120 ');
 		expect(prompt).toHaveBeenCalledTimes(1);
@@ -95,7 +95,7 @@ describe('Interpreter', () => {
 	});
 
 	test('dna', async () => {
-		const {steps, interp} = await runTestCase('dna.befunge', ()=>{}, 10000);
+		const {steps, interp} = await runTestCase('dna.bf', ()=>{}, 10000);
 
 		const stdout = readableString(interp.stdout);
 		expect(stdout).toMatch(/[TGAC]+/);
@@ -108,7 +108,7 @@ describe('Interpreter', () => {
 		prompt.mockReturnValueOnce('12');
 		prompt.mockReturnValueOnce('23');
 
-		const {steps, interp} = await runTestCase('compare-integers.befunge', prompt);
+		const {steps, interp} = await runTestCase('compare-integers.bf', prompt);
 
 		const stdout = readableString(interp.stdout);
 		expect(stdout).toEqual('A=12  B=23 \\nA < B\\n');
@@ -117,7 +117,7 @@ describe('Interpreter', () => {
 	});
 
 	test('sieve', async () => {
-		const {steps, interp} = await runTestCase('sieve.befunge', ()=>{}, 1000000);
+		const {steps, interp} = await runTestCase('sieve.bf', ()=>{}, 1000000);
 
 		expect(interp.stdout).toEqual('2 3 5 7 11 13 17 19 23 29 31 37 41 43 47 53 59 61 67 71 73 79 ');
 		expect(interp.stack).toEqual([80]);
@@ -125,7 +125,7 @@ describe('Interpreter', () => {
 	});
 
 	test('fibonnaci', async () => {
-		const {steps, interp} = await runTestCase('fibonacci.befunge', ()=>{}, 100000000);
+		const {steps, interp} = await runTestCase('fibonacci.bf', ()=>{}, 100000000);
 
 		expect(readableString(interp.stdout)).toEqual('0 1 1 2 3 5 8 13 21 34 55 89 144 233 377 ');
 		expect(interp.stack).toEqual([193634, 14]);

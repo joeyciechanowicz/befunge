@@ -1,7 +1,7 @@
 import {Interpreter} from './interpreter.js';
 import {Renderer} from './renderer.js';
 
-let speed = 1;
+let speed = 250;
 
 const get = document.getElementById.bind(document);
 const startStopButton = get('start-stop');
@@ -23,7 +23,22 @@ get('compile').addEventListener('click', () => {
 	renderer = new Renderer(program, programDisplay, stackDisplay, stdout, stats);
 
 	renderer.initialRender();
-	startStopButton.innerText = 'Start';
+	startStopButton.innerText = `Start (${speed})`;
+});
+
+function doTick() {
+	if (program.halted) {
+		renderer.renderTick();
+		return;
+	}
+	program.step();
+	renderer.renderTick();
+
+	window.requestAnimationFrame(doTick);
+}
+
+get('start-animation').addEventListener('click', () => {
+	window.requestAnimationFrame(doTick);
 });
 
 function restartInterval() {
@@ -45,7 +60,7 @@ startStopButton.addEventListener('click', () => {
 	if (interval) {
 		clearInterval(interval);
 		interval = undefined;
-		startStopButton.innerText = 'Start';
+		startStopButton.innerText = `Start (${speed})`;
 		return;
 	}
 
@@ -53,7 +68,7 @@ startStopButton.addEventListener('click', () => {
 	renderer.renderTick();
 
 	restartInterval();
-	startStopButton.innerText = 'Stop';
+	startStopButton.innerText = `Stop (${speed})`;
 });
 
 get('step').addEventListener('click', () => {
@@ -63,12 +78,23 @@ get('step').addEventListener('click', () => {
 
 get('speed-up').addEventListener('click', () => {
 	speed = Math.max(0, Math.floor(speed * 0.75));
-	restartInterval();
+
+	if (interval) {
+		startStopButton.innerText = `Stop (${speed})`;
+		restartInterval();
+	} else {
+		startStopButton.innerText = `Start (${speed})`;
+	}
 });
 
 get('slow-down').addEventListener('click', () => {
 	speed = Math.floor(speed * 1.25);
-	restartInterval();
+	if (interval) {
+		startStopButton.innerText = `Stop (${speed})`;
+		restartInterval();
+	} else {
+		startStopButton.innerText = `Start (${speed})`;
+	}
 });
 
 get('run').addEventListener('click', () => {
@@ -83,7 +109,7 @@ get('run').addEventListener('click', () => {
 	const ms = finish - start;
 	const hz = count / ms;
 
-	stats.innerText = `Took ${ms.toFixed(2)}ms, running at ${hz.toFixed(0)} IPS`;
+	stats.innerText = `Took ${ms.toFixed(2)}ms, running at ${hz.toFixed(0)} IPS. Total of ${count} operations.`;
 
 	renderer.renderTick();
 });

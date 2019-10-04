@@ -12,7 +12,7 @@
         }
 
         #stdout {
-            background-color: #a8a8a8;
+
         }
     </style>
 </head>
@@ -38,11 +38,12 @@ v,,,,,,"World!"<
                     <div class="btn-group mr-2" role="group" aria-label="First group">
                         <button type="button" class="btn btn-secondary" id="compile">Compile</button>
                         <button type="button" class="btn btn-secondary" id="run">Run</button>
-                        <button type="button" class="btn btn-secondary c-controls__start" id="start-stop">Start</button>
                         <button type="button" class="btn btn-secondary" id="step">Step</button>
+                        <button type="button" class="btn btn-secondary" id="start-animation">Start Animation</button>
                     </div>
 
                     <div class="btn-group mr-2" role="group" aria-label="First group">
+                        <button type="button" class="btn btn-secondary c-controls__start" id="start-stop">Start</button>
                         <button type="button" class="btn btn-secondary" id="speed-up">+</button>
                         <button type="button" class="btn btn-secondary" id="slow-down">-</button>
                     </div>
@@ -68,9 +69,14 @@ v,,,,,,"World!"<
 
         <div class="col-lg">
             <h1 class="h2">Stdout</h1>
-            <pre id="stdout" class="col-lg">
+            <div class="card">
+                <div class="card-body">
+                    <pre id="stdout">
 
-            </pre>
+                    </pre>
+                </div>
+            </div>
+
         </div>
     </div>
 

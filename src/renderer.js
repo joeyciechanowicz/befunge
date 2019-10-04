@@ -14,7 +14,7 @@ export class Renderer {
 		this.renderTick();
 	}
 
-	renderTick(timestamp) {
+	renderTick() {
 		// const table = document.createElement('table');
 		// table.classList.add('table', 'table-dark', 'table-bordered');
 		//
