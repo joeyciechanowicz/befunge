@@ -2,7 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const {promisify} = require('util');
 
-import {Interpreter} from '../src/interpreter';
+import {Interpreter} from '../interpreter';
 
 const readFile = promisify(fs.readFile);
 
@@ -12,7 +12,7 @@ const readFile = promisify(fs.readFile);
  * @param {number} maxTicks
  * @return {number} count
  */
-function runTillHalt(interpreter, maxTicks = 1000) {
+function runTillHalt(interpreter: Interpreter, maxTicks = 1000) {
 	let count = 0;
 	while (!interpreter.halted && count < maxTicks) {
 		interpreter.step();
@@ -34,9 +34,9 @@ function runTillHalt(interpreter, maxTicks = 1000) {
  * @param {number} maxTicks
  * @returns {Promise<{interp: Interpreter, steps: number}>}
  */
-async function runTestCase(testCase, prompt = undefined, maxTicks = 1000) {
+async function runTestCase(testCase: string, prompt = undefined, maxTicks = 1000) {
 	const source = await readFile(path.join(__dirname, 'cases/operators', testCase));
-	const interp = new Interpreter(source.toString(), prompt);
+	const interp = new Interpreter(source.toString(), prompt as any);
 
 	const steps = runTillHalt(interp, maxTicks);
 
@@ -46,17 +46,9 @@ async function runTestCase(testCase, prompt = undefined, maxTicks = 1000) {
 	};
 }
 
-function readableString(str) {
-	return str.replace(/\n/g, '\\n')
-		.replace(String.fromCharCode(NaN), '\\u+0000')
-		.replace(String.fromCharCode(NaN), '\\u+0000')
-		.replace(String.fromCharCode(NaN), '\\u+0000')
-		.replace(String.fromCharCode(NaN), '\\u+0000');
-}
-
 describe('Operators', () => {
 	test('horizontal if-true', async () => {
-		const {steps, interp} = await runTestCase('horizontal-if-true.bf');
+		const { interp} = await runTestCase('horizontal-if-true.bf');
 
 		expect(interp.x).toBe(2);
 		expect(interp.y).toBe(1);
@@ -64,7 +56,7 @@ describe('Operators', () => {
 	});
 
 	test('vertical if-true', async () => {
-		const {steps, interp} = await runTestCase('vertical-if-true.bf');
+		const {interp} = await runTestCase('vertical-if-true.bf');
 
 		expect(interp.x).toBe(2);
 		expect(interp.y).toBe(2);
@@ -72,7 +64,7 @@ describe('Operators', () => {
 	});
 
 	test('horizontal if-false', async () => {
-		const {steps, interp} = await runTestCase('horizontal-if-false.bf');
+		const {interp} = await runTestCase('horizontal-if-false.bf');
 
 		expect(interp.x).toBe(0);
 		expect(interp.y).toBe(1);
@@ -80,7 +72,7 @@ describe('Operators', () => {
 	});
 
 	test('vertical if-false', async () => {
-		const {steps, interp} = await runTestCase('vertical-if-false.bf');
+		const {interp} = await runTestCase('vertical-if-false.bf');
 
 		expect(interp.x).toBe(2);
 		expect(interp.y).toBe(0);
@@ -88,32 +80,32 @@ describe('Operators', () => {
 	});
 
 	test('not true', async () => {
-		const {steps, interp} = await runTestCase('not-true.bf');
+		const {interp} = await runTestCase('not-true.bf');
 		expect(interp.stack).toEqual([1]);
 	});
 
 	test('not false', async () => {
-		const {steps, interp} = await runTestCase('not-false.bf');
+		const {interp} = await runTestCase('not-false.bf');
 		expect(interp.stack).toEqual([0]);
 	});
 
 	test('greater than 4 > 5', async () => {
-		const {steps, interp} = await runTestCase('greater-than-4-5.bf');
+		const {interp} = await runTestCase('greater-than-4-5.bf');
 		expect(interp.stack).toEqual([0]);
 	});
 
 	test('greater than 5 > 4', async () => {
-		const {steps, interp} = await runTestCase('greater-than-5-4.bf');
+		const {interp} = await runTestCase('greater-than-5-4.bf');
 		expect(interp.stack).toEqual([1]);
 	});
 
 	test('duplicate', async () => {
-		const {steps, interp} = await runTestCase('duplicate.bf');
+		const {interp} = await runTestCase('duplicate.bf');
 		expect(interp.stack).toEqual([5, 5]);
 	});
 
 	test('swap', async () => {
-		const {steps, interp} = await runTestCase('swap.bf');
+		const {interp} = await runTestCase('swap.bf');
 		expect(interp.stack).toEqual([4, 5]);
 	});
 });

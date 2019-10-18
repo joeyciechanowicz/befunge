@@ -2,7 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const {promisify} = require('util');
 
-import {Interpreter} from '../src/interpreter';
+import {Interpreter} from '../interpreter';
 
 const readFile = promisify(fs.readFile);
 
@@ -12,7 +12,7 @@ const readFile = promisify(fs.readFile);
  * @param {number} maxTicks
  * @return {number} count
  */
-function runTillHalt(interpreter, maxTicks = 1000) {
+function runTillHalt(interpreter: Interpreter, maxTicks = 1000) {
 	let count = 0;
 	while (!interpreter.halted && count < maxTicks) {
 		interpreter.step();
@@ -34,7 +34,7 @@ function runTillHalt(interpreter, maxTicks = 1000) {
  * @param {number} maxTicks
  * @returns {Promise<{interp: Interpreter, steps: number}>}
  */
-async function runTestCase(testCase, prompt = undefined, maxTicks = 1000) {
+async function runTestCase(testCase: string, prompt: (message: string) => string = jest.fn<string, [string]>(), maxTicks = 1000) {
 	const source = await readFile(path.join(__dirname, 'cases/programs', testCase));
 	const interp = new Interpreter(source.toString(), prompt);
 
@@ -46,7 +46,7 @@ async function runTestCase(testCase, prompt = undefined, maxTicks = 1000) {
 	};
 }
 
-function readableString(str) {
+function readableString(str: string) {
 	return str.replace(/\n/g, '\\n')
 		.replace(String.fromCharCode(NaN), '\\u+0000')
 		.replace(String.fromCharCode(NaN), '\\u+0000')
@@ -73,7 +73,7 @@ describe('Interpreter', () => {
 	});
 
 	test('Prompt', async () => {
-		const prompt = jest.fn();
+		const prompt = jest.fn<string, [string]>();
 		prompt.mockReturnValueOnce('a');
 
 		const {steps, interp} = await runTestCase('prompt.bf', prompt);
@@ -95,12 +95,12 @@ describe('Interpreter', () => {
 	});
 
 	test('dna', async () => {
-		const {steps, interp} = await runTestCase('dna.bf', ()=>{}, 10000);
+		const {interp} = await runTestCase('dna.bf', jest.fn<string, [string]>(), 10000);
 
 		const stdout = readableString(interp.stdout);
 		expect(stdout).toMatch(/[TGAC]+/);
 		expect(interp.stdout.length).toEqual(58);
-		expect(interp.stack).toEqual([0]);
+		expect(interp.stack).toEqual([1]);
 	});
 
 	test('compare integers', async () => {
@@ -117,7 +117,7 @@ describe('Interpreter', () => {
 	});
 
 	test('sieve', async () => {
-		const {steps, interp} = await runTestCase('sieve.bf', ()=>{}, 1000000);
+		const {steps, interp} = await runTestCase('sieve.bf', jest.fn<string, [string]>(), 1000000);
 
 		expect(interp.stdout).toEqual('2 3 5 7 11 13 17 19 23 29 31 37 41 43 47 53 59 61 67 71 73 79 ');
 		expect(interp.stack).toEqual([80]);
@@ -125,7 +125,7 @@ describe('Interpreter', () => {
 	});
 
 	test('fibonnaci', async () => {
-		const {steps, interp} = await runTestCase('fibonacci.bf', ()=>{}, 100000000);
+		const {steps, interp} = await runTestCase('fibonacci.bf', jest.fn<string, [string]>(), 100000000);
 
 		expect(readableString(interp.stdout)).toEqual('0 1 1 2 3 5 8 13 21 34 55 89 144 233 377 ');
 		expect(interp.stack).toEqual([193634, 14]);
