@@ -8,7 +8,6 @@ Run:
 npm install
 npm start
 ```
-Open your browser to http://localhost:9080/
 
 ## Examples
 

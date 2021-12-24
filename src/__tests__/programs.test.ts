@@ -1,8 +1,8 @@
-const fs = require('fs');
-const path = require('path');
-const {promisify} = require('util');
+import fs from 'fs';
+import path from 'path';
+import { promisify } from 'util';
+import { Interpreter } from '../interpreter';
 
-import {Interpreter} from '../interpreter';
 
 const readFile = promisify(fs.readFile);
 

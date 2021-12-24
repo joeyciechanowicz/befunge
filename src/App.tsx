@@ -1,11 +1,27 @@
-import React, {useState} from 'react';
-
-import {useLoadScripts} from "./hooks";
+import { useCallback, useEffect, useState } from 'react';
+import { useInterpreter, useLoadScripts, useRun } from './hooks';
+import { Stack } from './stack';
+import { Table } from './table';
 
 const App: React.FC = () => {
     const [script, setScript] = useState('');
-    const [speed, setSpeed] = useState(250);
-    const {scriptNames, handleChange} = useLoadScripts(setScript);
+    const [programId, setProgramId] = useState(0);
+    const [delay, setDelay] = useState(250);
+    const { scriptNames, handleChange } = useLoadScripts(setScript);
+
+    const interpreter = useInterpreter(script);
+
+    const { running, start, stop } = useRun(interpreter, delay);
+
+    const step = useCallback(() => {
+        if (!interpreter.halted) {
+            interpreter.step();
+        }
+    }, [interpreter]);
+
+    useEffect(() => {
+        setProgramId((p) => p + 1);
+    }, [script]);
 
     return (
         <div className="container-fluid">
@@ -13,67 +29,132 @@ const App: React.FC = () => {
                 <div className="col-lg-12">
                     <form>
                         <div className="form-group">
-                            <label htmlFor="load-script">Load script</label>
+                            <h1>Load Script</h1>
+                            <label htmlFor="load-script">Script name </label>
                             <select id="load-script" onChange={handleChange}>
-                                <option value=''></option>
-                                {
-                                    scriptNames.map(name => <option key={name} value={name}>{name}</option>)
-                                }
+                                <option value=""></option>
+                                {scriptNames.map((name) => (
+                                    <option key={name} value={name}>
+                                        {name}
+                                    </option>
+                                ))}
                             </select>
                         </div>
 
                         <div className="form-group">
-                            <label className="h3" htmlFor="script">Script</label>
-                            <textarea id="script" className="form-control" rows={8} onChange={e => setScript(e.target.value)} value={script}>
-                            </textarea>
+                            <label className="h3" htmlFor="script">
+                                Script
+                            </label>
+                            <textarea
+                                id="script"
+                                className="form-control"
+                                rows={8}
+                                onChange={(e) => setScript(e.target.value)}
+                                value={script}
+                            ></textarea>
                         </div>
 
-                        <div className="btn-toolbar" role="toolbar" aria-label="Playback controls">
-                            <div className="btn-group mr-2" role="group" aria-label="First group">
-                                <button type="button" className="btn btn-secondary">Compile</button>
-                                <button type="button" className="btn btn-secondary">Run</button>
-                                <button type="button" className="btn btn-secondary">Step</button>
-                                <button type="button" className="btn btn-secondary">Start Animation</button>
+                        <div
+                            className="btn-toolbar"
+                            role="toolbar"
+                            aria-label="Playback controls"
+                        >
+                            <div
+                                className="btn-group mr-2"
+                                role="group"
+                                aria-label="First group"
+                            >
+                                <button
+                                    type="button"
+                                    className="btn btn-secondary"
+                                    onClick={() =>
+                                        running ? stop() : start(1000)
+                                    }
+                                >
+                                    {running ? 'Stop' : 'Run'}
+                                </button>
+                                <button
+                                    type="button"
+                                    className="btn btn-secondary"
+                                    onClick={step}
+                                    disabled={running}
+                                >
+                                    Step
+                                </button>
+                                <button
+                                    type="button"
+                                    className="btn btn-secondary"
+                                    onClick={() =>
+                                        running ? stop() : start(1)
+                                    }
+                                >
+                                    {running ? 'Stop' : 'Start'} Animation
+                                </button>
                             </div>
 
-                            <div className="btn-group mr-2" role="group" aria-label="First group">
-                                <button type="button" className="btn btn-secondary" aria-label="slow-down" onClick={() => setSpeed(Math.max(1, Math.floor(speed * 0.5)))}>-</button>
-                                <button type="button" disabled className="btn btn-secondary" >{speed}</button>
-                                <button type="button" className="btn btn-secondary" aria-label="speed up" onClick={() => setSpeed(Math.ceil(speed * 1.5))}>+</button>
+                            <div
+                                className="btn-group mr-2"
+                                role="group"
+                                aria-label="First group"
+                            >
+                                <button
+                                    type="button"
+                                    className="btn btn-secondary"
+                                    aria-label="slow-down"
+                                    onClick={() =>
+                                        setDelay(
+                                            Math.max(1, Math.floor(delay * 0.5))
+                                        )
+                                    }
+                                >
+                                    -
+                                </button>
+                                <button
+                                    type="button"
+                                    disabled
+                                    className="btn btn-secondary"
+                                >
+                                    {delay}
+                                </button>
+                                <button
+                                    type="button"
+                                    className="btn btn-secondary"
+                                    aria-label="delay up"
+                                    onClick={() =>
+                                        setDelay(Math.ceil(delay * 1.5))
+                                    }
+                                >
+                                    +
+                                </button>
                             </div>
                         </div>
-
-                        <span id="stats"/>
                     </form>
                 </div>
 
-                <div className="col-lg">
+                <div className="col-md">
                     <h1 className="h2">Program</h1>
-                    <div id="program-display">
-
-                    </div>
+                    <Table
+                        program={interpreter._interpreter.program}
+                        pid={programId}
+                        x={interpreter.x}
+                        y={interpreter.y}
+                    />
                 </div>
 
                 <div className="col-lg">
                     <h1 className="h2">Stack</h1>
-                    <ul className="list-group" id="stack-display">
-
-                    </ul>
+                    <Stack stack={interpreter.stack} />
                 </div>
 
                 <div className="col-lg">
                     <h1 className="h2">Stdout</h1>
                     <div className="card">
                         <div className="card-body">
-                    <pre id="stdout">
-
-                    </pre>
+                            <pre id="stdout">{interpreter.stdout}</pre>
                         </div>
                     </div>
-
                 </div>
             </div>
-
         </div>
     );
 };

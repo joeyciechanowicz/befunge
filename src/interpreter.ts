@@ -10,22 +10,24 @@ enum Direction {
     Left
 }
 
+type Prompt = (msg?: string) => string | null;
+
 export class Interpreter {
-    private program: string[][] = [];
     private direction: Direction = Direction.Right;
     private stringMode: boolean = false;
-    public halted: boolean = false;
-
-    private readonly prompt: (text: string) => string;
+    
+    private readonly prompt: Prompt;
     private readonly width: number;
     private readonly height: number;
-
+    
+    public halted: boolean = false;
+    public readonly program: string[][] = [];
     public x: number = 0;
     public y: number = 0;
     public stack: number[] = [];
     public stdout: string = '';
 
-    constructor(script: string, prompt: (text: string) => string) {
+    constructor(script: string, prompt: Prompt) {
         this.prompt = prompt;
 
         const lines = script.split(/\n/g);
@@ -250,7 +252,7 @@ export class Interpreter {
             }
 
             case '$': {
-                this.stack.pop() || 0;
+                this.stack.pop();
                 break;
             }
 
@@ -298,14 +300,14 @@ export class Interpreter {
 
             case '&': {
                 // Ask user for a number and push it
-                const number = this.prompt('Enter a number');
+                const number = this.prompt('Enter a number') || '';
                 const converted = Number.parseInt(number);
                 this.stack.push(converted);
                 break;
             }
             case '~': {
                 // Ask user for a character and push its ASCII value
-                const char = this.prompt('Enter a character');
+                const char = this.prompt('Enter a character') || '';
 
                 if (char.length === 0) {
                     throw new Error('Must enter a character');
