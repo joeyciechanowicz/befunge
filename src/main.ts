@@ -1,5 +1,6 @@
 import {Interpreter} from './interpreter.js';
 import {Renderer} from './renderer.js';
+import './style.css';
 
 let speed = 250;
 
