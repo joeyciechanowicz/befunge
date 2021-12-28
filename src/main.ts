@@ -4,23 +4,33 @@ import './style.css';
 
 let speed = 250;
 
-const get = document.getElementById.bind(document);
+function get(id: string): HTMLElement {
+	const el = document.getElementById(id);
+
+	if (!el) {
+		throw new Error(`No element exists for id ${id}`);
+	}
+
+	return el;
+}
+
 const startStopButton = get('start-stop');
 const programDisplay = get('program-display');
 const stackDisplay = get('stack-display');
 const stdout = get('stdout');
 const stats = get('stats');
+const animation = get('start-animation');
 
-let program;
-let renderer;
-let interval;
+let program: Interpreter;
+let renderer: Renderer;
+let interval: NodeJS.Timeout | undefined;
 
 get('compile').addEventListener('click', () => {
 	if (interval) {
 		clearInterval(interval);
 		interval = undefined;
 	}
-	program = new Interpreter(get('script').value, prompt.bind(window));
+	program = new Interpreter((get('script') as HTMLInputElement).value, prompt.bind(window));
 	renderer = new Renderer(program, programDisplay, stackDisplay, stdout, stats);
 
 	renderer.initialRender();
@@ -38,7 +48,7 @@ function doTick() {
 	window.requestAnimationFrame(doTick);
 }
 
-get('start-animation').addEventListener('click', () => {
+animation.addEventListener('click', () => {
 	window.requestAnimationFrame(doTick);
 });
 
@@ -52,7 +62,7 @@ function restartInterval() {
 		renderer.renderTick();
 
 		if (program.halted) {
-			clearInterval(interval);
+			clearInterval(interval as NodeJS.Timeout);
 		}
 	}, speed);
 }
@@ -100,12 +110,12 @@ get('slow-down').addEventListener('click', () => {
 
 get('run').addEventListener('click', () => {
 	let count = 0;
-	const start = new Date();
+	const start = performance.now();
 	while (!program.halted) {
 		program.step();
 		count++;
 	}
-	const finish = new Date();
+	const finish = performance.now();
 
 	const ms = finish - start;
 	const hz = count / ms;
