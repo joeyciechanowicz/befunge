@@ -33,7 +33,6 @@ get('compile').addEventListener('click', () => {
 	program = new Interpreter((get('script') as HTMLInputElement).value, prompt.bind(window));
 	renderer = new Renderer(program, programDisplay, stackDisplay, stdout, stats);
 
-	renderer.initialRender();
 	startStopButton.innerText = `Start (${speed})`;
 });
 
@@ -120,9 +119,8 @@ get('run').addEventListener('click', () => {
 	const ms = finish - start;
 	const hz = count / ms;
 
-	stats.innerText = `Took ${ms.toFixed(2)}ms, running at ${hz.toFixed(0)} IPS. Total of ${count} operations.`;
-
 	renderer.renderTick();
+	stats.innerText = `Took ${ms.toFixed(2)}ms, running at ${hz.toFixed(0)} IPS. Total of ${count} operations.`;
 });
 
 document.addEventListener('DOMContentLoaded', () => {
