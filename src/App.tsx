@@ -1,15 +1,30 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useInterpreter, useLoadScripts, useRun } from './hooks';
 import { Stack } from './stack';
+import { Stdin } from './stdin';
 import { Table } from './table';
+
+function useStdin(stdin: string) {
+    const [curr, setCurr] = useState(0);
+
+    const read = () => {};
+
+    useEffect(() => {
+        setCurr(0);
+    }, [stdin]);
+
+    return [curr, read];
+}
 
 const App: React.FC = () => {
     const [script, setScript] = useState('');
+    const [stdin, setStdin] = useState('');
     const [programId, setProgramId] = useState(0);
     const [delay, setDelay] = useState(250);
     const { scriptNames, handleChange } = useLoadScripts(setScript);
 
-    const interpreter = useInterpreter(script);
+    const [x, read] = useStdin(stdin);
+    const interpreter = useInterpreter(script, read);
 
     const { running, start, stop } = useRun(interpreter, delay);
 
@@ -51,6 +66,19 @@ const App: React.FC = () => {
                                 rows={8}
                                 onChange={(e) => setScript(e.target.value)}
                                 value={script}
+                            ></textarea>
+                        </div>
+
+                        <div className="formGroup">
+                            <label className="h3" htmlFor="stdin">
+                                Stdin
+                            </label>
+                            <textarea
+                                id="stdin"
+                                className="form-control"
+                                rows={8}
+                                onChange={(e) => setStdin(e.target.value)}
+                                value={stdin}
                             ></textarea>
                         </div>
 
@@ -131,7 +159,7 @@ const App: React.FC = () => {
                     </form>
                 </div>
 
-                <div className="col-md">
+                <div className="col-lg-12">
                     <h1 className="h2">Program</h1>
                     <Table
                         program={interpreter._interpreter.program}
@@ -139,6 +167,11 @@ const App: React.FC = () => {
                         x={interpreter.x}
                         y={interpreter.y}
                     />
+                </div>
+
+                <div className="col-lg">
+                    <h1 className="h2">Stdin</h1>
+                    <Stdin text={stdin} char={x} />
                 </div>
 
                 <div className="col-lg">

@@ -29,9 +29,9 @@ export interface WrappedInterpreter {
     step: () => void;
     _interpreter: Interpreter;
 }
-export function useInterpreter(script: string): WrappedInterpreter {
+export function useInterpreter(script: string, readline: ReadLine): WrappedInterpreter {
     const [interpreter, setInterpreter] = useState(
-        () => new Interpreter(script, prompt.bind(window))
+        () => new Interpreter(script, readline)
     );
 
     const [x, setX] = useState(0);
