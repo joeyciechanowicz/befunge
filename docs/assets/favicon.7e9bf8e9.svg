@@ -1,0 +1,6 @@
+<svg xmlns="http://w3.org/2000/svg" viewBox="0 0 100 100">
+<style>
+    .bef { font: bold 100px sans-serif; fill: #BD34FE }
+  </style>
+<text y=".9em" font-size="90" class="bef">B</text>
+</svg>
