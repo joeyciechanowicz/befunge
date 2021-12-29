@@ -33,9 +33,9 @@ function runTillHalt(interpreter: Interpreter, maxTicks = 1000) {
  * @param {number} maxTicks
  * @returns {Promise<{interp: Interpreter, steps: number}>}
  */
-async function runTestCase(testCase: string, prompt = undefined, maxTicks = 1000) {
+async function runTestCase(testCase: string, stdin: string = '', maxTicks = 1000) {
 	const source = await readFile(path.join(__dirname, 'cases/operators', testCase));
-	const interp = new Interpreter(source.toString(), prompt as any);
+	const interp = new Interpreter(source.toString(), stdin);
 
 	const steps = runTillHalt(interp, maxTicks);
 

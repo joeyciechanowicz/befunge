@@ -16,27 +16,22 @@ export class Interpreter {
     private direction: Direction = Direction.Right;
     private stringMode: boolean = false;
     
-    private readonly read: ReadStdin;
     private readonly width: number;
     private readonly height: number;
     
     public halted: boolean = false;
     public readonly program: string[][] = [];
+    public readonly stdin: string;
     public x: number = 0;
     public y: number = 0;
+    public stdinPos: number = 0;
     public stack: number[] = [];
     public stdout: string = '';
 
-    constructor(script: string, readStdin: ReadStdin) {
-        this.read = readStdin;
-
+    constructor(script: string, stdin: string) {
+        this.stdin = stdin;
         const lines = script.split(/\n/g);
-        this.width = lines.reduce((max, curr) => {
-            if (curr.length > max) {
-                return curr.length;
-            }
-            return max;
-        }, 0);
+        this.width = lines.reduce((max, curr) => curr.length > max ? curr.length : max, 0);
         this.height = lines.length;
 
         lines.forEach((line) => {
@@ -47,6 +42,36 @@ export class Interpreter {
                 this.program.push(Array.from(line));
             }
         });
+    }
+
+    private nextStdinChar(): string | null {
+        if (this.stdinPos >= this.stdin.length) {
+            return null;
+        }
+        return this.stdin.charAt(this.stdinPos++);
+    }
+
+    private nextStdinNum(): number {
+        if (this.stdinPos >= this.stdin.length) {
+            return -1;
+        }
+
+        let num = '';
+        while (this.stdin.charAt(this.stdinPos).match(/[0-9]/)) {
+            num += this.stdin.charAt(this.stdinPos);
+            this.stdinPos++;
+        }
+
+        if (this.stdin.charAt(this.stdinPos) === ' ' || this.stdin.charAt(this.stdinPos) === '\n') {
+            this.stdinPos++;
+        }
+
+        const result = parseInt(num);
+        if (isNaN(result)) {
+            return -1;
+        }
+
+        return result;
     }
 
     private nextPosition(): void {
@@ -298,14 +323,12 @@ export class Interpreter {
 
             case '&': {
                 // Ask user for a number and push it
-                const number = this.read() || '';
-                const converted = Number.parseInt(number);
-                this.stack.push(converted);
+                this.stack.push(this.nextStdinNum());
                 break;
             }
             case '~': {
                 // Ask user for a character and push its ASCII value
-                const char = this.read() || '';
+                const char = this.nextStdinChar() || '';
 
                 if (char.length === 0) {
                     // noop
@@ -328,6 +351,7 @@ export class Interpreter {
             }
 
             default:
+                // noop as default
                 break;
         }
 

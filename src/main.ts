@@ -1,17 +1,17 @@
-import {Interpreter} from './interpreter.js';
-import {Renderer} from './renderer.js';
+import { Interpreter } from './interpreter.js';
+import { Renderer } from './renderer.js';
 import './style.css';
 
-let speed = 250;
+let speed = 60;
 
 function get(id: string): HTMLElement {
-	const el = document.getElementById(id);
+    const el = document.getElementById(id);
 
-	if (!el) {
-		throw new Error(`No element exists for id ${id}`);
-	}
+    if (!el) {
+        throw new Error(`No element exists for id ${id}`);
+    }
 
-	return el;
+    return el;
 }
 
 const startStopButton = get('start-stop');
@@ -19,111 +19,126 @@ const programDisplay = get('program-display');
 const stackDisplay = get('stack-display');
 const stdout = get('stdout');
 const stats = get('stats');
-const animation = get('start-animation');
+const stdinDisplay = get('stdin');
+const stdinText = get('stdin-text') as HTMLInputElement;
+const script = get('script') as HTMLInputElement;
 
 let program: Interpreter;
 let renderer: Renderer;
 let interval: NodeJS.Timeout | undefined;
 
 get('compile').addEventListener('click', () => {
-	if (interval) {
-		clearInterval(interval);
-		interval = undefined;
-	}
-	program = new Interpreter((get('script') as HTMLInputElement).value, prompt.bind(window));
-	renderer = new Renderer(program, programDisplay, stackDisplay, stdout, stats);
+    if (interval) {
+        clearInterval(interval);
+        interval = undefined;
+    }
 
-	startStopButton.innerText = `Start (${speed})`;
-});
+    program = new Interpreter(script.value, stdinText.value);
+    renderer = new Renderer(
+        program,
+        programDisplay,
+        stackDisplay,
+        stdinDisplay,
+        stdout,
+        stats
+    );
 
-function doTick() {
-	if (program.halted) {
-		renderer.renderTick();
-		return;
-	}
-	program.step();
-	renderer.renderTick();
-
-	window.requestAnimationFrame(doTick);
-}
-
-animation.addEventListener('click', () => {
-	window.requestAnimationFrame(doTick);
+    startStopButton.innerText = `Start (${speed})`;
 });
 
 function restartInterval() {
-	if (interval) {
-		clearInterval(interval);
-	}
+    if (interval) {
+        clearInterval(interval);
+    }
 
-	interval = setInterval(() => {
-		program.step();
-		renderer.renderTick();
+    interval = setInterval(() => {
+        program.step();
+        renderer.renderTick();
 
-		if (program.halted) {
-			clearInterval(interval as NodeJS.Timeout);
-		}
-	}, speed);
+        if (program.halted) {
+            clearInterval(interval as NodeJS.Timeout);
+        }
+    }, speed);
 }
 
 startStopButton.addEventListener('click', () => {
-	if (interval) {
-		clearInterval(interval);
-		interval = undefined;
-		startStopButton.innerText = `Start (${speed})`;
-		return;
-	}
+    if (interval) {
+        clearInterval(interval);
+        interval = undefined;
+        startStopButton.innerText = `Start (${speed})`;
+        return;
+    }
 
-	program.step();
-	renderer.renderTick();
+    program.step();
+    renderer.renderTick();
 
-	restartInterval();
-	startStopButton.innerText = `Stop (${speed})`;
+    restartInterval();
+    startStopButton.innerText = `Stop (${speed})`;
 });
 
 get('step').addEventListener('click', () => {
-	program.step();
-	renderer.renderTick();
+    program.step();
+    renderer.renderTick();
 });
 
 get('speed-up').addEventListener('click', () => {
-	speed = Math.max(0, Math.floor(speed * 0.75));
+    speed = Math.max(0, Math.floor(speed * 0.75));
 
-	if (interval) {
-		startStopButton.innerText = `Stop (${speed})`;
-		restartInterval();
-	} else {
-		startStopButton.innerText = `Start (${speed})`;
-	}
+    if (interval) {
+        startStopButton.innerText = `Stop (${speed})`;
+        restartInterval();
+    } else {
+        startStopButton.innerText = `Start (${speed})`;
+    }
 });
 
 get('slow-down').addEventListener('click', () => {
-	speed = Math.floor(speed * 1.25);
-	if (interval) {
-		startStopButton.innerText = `Stop (${speed})`;
-		restartInterval();
-	} else {
-		startStopButton.innerText = `Start (${speed})`;
-	}
+    speed = Math.floor(speed * 1.25);
+    if (interval) {
+        startStopButton.innerText = `Stop (${speed})`;
+        restartInterval();
+    } else {
+        startStopButton.innerText = `Start (${speed})`;
+    }
 });
 
 get('run').addEventListener('click', () => {
-	let count = 0;
-	const start = performance.now();
-	while (!program.halted) {
-		program.step();
-		count++;
-	}
-	const finish = performance.now();
+    let count = 0;
+    const start = performance.now();
+    while (!program.halted) {
+        program.step();
+        count++;
+    }
+    const finish = performance.now();
 
-	const ms = finish - start;
-	const hz = count / ms;
+    const ms = finish - start;
+    const hz = count / ms;
 
-	renderer.renderTick();
-	stats.innerText = `Took ${ms.toFixed(2)}ms, running at ${hz.toFixed(0)} IPS. Total of ${count} operations.`;
+    renderer.renderTick();
+    stats.innerText = `Took ${ms.toFixed(2)}ms, running at ${hz.toFixed(
+        0
+    )} IPS. Total of ${count} operations.`;
+});
+
+script.addEventListener('change', () => {
+    sessionStorage.setItem('program', script.value);
+});
+
+stdinText.addEventListener('change', () => {
+    sessionStorage.setItem('stdin', stdinText.value);
 });
 
 document.addEventListener('DOMContentLoaded', () => {
-	get('compile').click();
-});
+    let savedProgram = sessionStorage.getItem('program');
+    let savedStdin = sessionStorage.getItem('stdin');
 
+    if (savedProgram) {
+        script.value = savedProgram;
+    }
+
+    if (savedStdin) {
+        stdinText.value = savedStdin;
+    }
+
+    get('compile').click();
+});
