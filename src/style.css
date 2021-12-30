@@ -10,7 +10,11 @@ code {
     monospace;
 }
 
-.highlight {
+textarea {
+  font-family: monospace;
+}
+
+#highlight {
   background-color: #da75c3;
 }
 

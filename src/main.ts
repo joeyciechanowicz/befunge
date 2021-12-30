@@ -1,4 +1,4 @@
-import { Interpreter } from './interpreter.js';
+import { flags, Interpreter } from './interpreter.js';
 import { Renderer } from './renderer.js';
 import './style.css';
 
@@ -52,8 +52,8 @@ function restartInterval() {
     }
 
     interval = setInterval(() => {
-        program.step();
-        renderer.renderTick();
+        const changes = program.step();
+        renderer.renderTick(changes);
 
         if (program.halted) {
             clearInterval(interval as NodeJS.Timeout);
@@ -69,16 +69,16 @@ startStopButton.addEventListener('click', () => {
         return;
     }
 
-    program.step();
-    renderer.renderTick();
+    const changes = program.step();
+    renderer.renderTick(changes);
 
     restartInterval();
     startStopButton.innerText = `Stop (${speed})`;
 });
 
 get('step').addEventListener('click', () => {
-    program.step();
-    renderer.renderTick();
+    const changes = program.step();
+    renderer.renderTick(changes);
 });
 
 get('speed-up').addEventListener('click', () => {
@@ -114,7 +114,7 @@ get('run').addEventListener('click', () => {
     const ms = finish - start;
     const hz = count / ms;
 
-    renderer.renderTick();
+    renderer.renderTick(flags.programDirty | flags.stackDirty | flags.stdinDirty | flags.stdoutDirty);
     stats.innerText = `Took ${ms.toFixed(2)}ms, running at ${hz.toFixed(
         0
     )} IPS. Total of ${count} operations.`;

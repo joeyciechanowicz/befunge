@@ -10,7 +10,12 @@ enum Direction {
     Left
 }
 
-export type ReadStdin = () => string | null;
+export const flags = {
+    stackDirty: 0b0001,
+    programDirty: 0b0010,
+    stdinDirty: 0b0100,
+    stdoutDirty: 0b1000
+}
 
 export class Interpreter {
     private direction: Direction = Direction.Right;
@@ -97,10 +102,16 @@ export class Interpreter {
         this.y = newY;
     }
 
-    step() {
+    /**
+     * Run one step of the program
+     * @returns bitmask of any changes (see flags)
+     */
+    step(): number {
         if (this.halted) {
-            return;
+            return 0;
         }
+
+        let changes = 0b000;
 
         const token = this.program[this.y][this.x];
 
@@ -109,10 +120,11 @@ export class Interpreter {
                 this.stringMode = false;
             } else {
                 this.stack.push(token.charCodeAt(0));
+                changes |= flags.stackDirty;
             }
 
             this.nextPosition();
-            return;
+            return changes;
         }
 
         switch (token) {
@@ -131,63 +143,78 @@ export class Interpreter {
 
             case '0':
                 this.stack.push(0);
+                changes |= flags.stackDirty;
                 break;
             case '1':
                 this.stack.push(1);
+                changes |= flags.stackDirty;
                 break;
             case '2':
                 this.stack.push(2);
+                changes |= flags.stackDirty;
                 break;
             case '3':
                 this.stack.push(3);
+                changes |= flags.stackDirty;
                 break;
             case '4':
                 this.stack.push(4);
+                changes |= flags.stackDirty;
                 break;
             case '5':
                 this.stack.push(5);
+                changes |= flags.stackDirty;
                 break;
             case '6':
                 this.stack.push(6);
+                changes |= flags.stackDirty;
                 break;
             case '7':
                 this.stack.push(7);
+                changes |= flags.stackDirty;
                 break;
             case '8':
                 this.stack.push(8);
+                changes |= flags.stackDirty;
                 break;
             case '9':
                 this.stack.push(9);
+                changes |= flags.stackDirty;
                 break;
 
             case '+': {
                 const a = this.stack.pop() || 0;
                 const b = this.stack.pop() || 0;
                 this.stack.push(a + b);
+                changes |= flags.stackDirty;
                 break;
             }
             case '-': {
                 const a = this.stack.pop() || 0;
                 const b = this.stack.pop() || 0;
                 this.stack.push(b - a);
+                changes |= flags.stackDirty;
                 break;
             }
             case '/': {
                 const a = this.stack.pop() || 0;
                 const b = this.stack.pop() || 0;
                 this.stack.push(Math.floor(b / a));
+                changes |= flags.stackDirty;
                 break;
             }
             case '*': {
                 const a = this.stack.pop() || 0;
                 const b = this.stack.pop() || 0;
                 this.stack.push(a * b);
+                changes |= flags.stackDirty;
                 break;
             }
             case '%': {
                 const a = this.stack.pop() || 0;
                 const b = this.stack.pop() || 0;
                 this.stack.push(b % a);
+                changes |= flags.stackDirty;
                 break;
             }
 
@@ -199,6 +226,7 @@ export class Interpreter {
                 } else {
                     this.stack.push(0);
                 }
+                changes |= flags.stackDirty;
                 break;
             }
 
@@ -212,12 +240,12 @@ export class Interpreter {
                 } else {
                     this.stack.push(0);
                 }
+                changes |= flags.stackDirty;
                 break;
             }
 
             case '?': {
                 // Start moving in a random cardinal direction
-                // TODO: Do this in one operation
                 const newDirection = Math.random();
                 if (newDirection < 0.25) {
                     this.direction = UP;
@@ -239,6 +267,7 @@ export class Interpreter {
                 } else {
                     this.direction = LEFT;
                 }
+                changes |= flags.stackDirty;
                 break;
             }
             case '|': {
@@ -249,6 +278,7 @@ export class Interpreter {
                 } else {
                     this.direction = UP;
                 }
+                changes |= flags.stackDirty;
                 break;
             }
 
@@ -262,6 +292,7 @@ export class Interpreter {
                     this.stack.push(a);
                     this.stack.push(a);
                 }
+                changes |= flags.stackDirty;
                 break;
             }
 
@@ -271,11 +302,13 @@ export class Interpreter {
                 const b = this.stack.pop() || 0;
                 this.stack.push(a);
                 this.stack.push(b);
+                changes |= flags.stackDirty;
                 break;
             }
 
             case '$': {
                 this.stack.pop();
+                changes |= flags.stackDirty;
                 break;
             }
 
@@ -283,12 +316,14 @@ export class Interpreter {
                 // Pop value and output as an integer followed by a space
                 const a = this.stack.pop() || 0;
                 this.stdout += a + ' ';
+                changes |= flags.stackDirty | flags.stdoutDirty;
                 break;
             }
             case ',': {
                 // Pop value and output as ASCII character
                 const a = this.stack.pop() || 0;
                 this.stdout += String.fromCharCode(a);
+                changes |= flags.stackDirty | flags.stdoutDirty;
                 break;
             }
 
@@ -300,11 +335,18 @@ export class Interpreter {
 
             case 'p': {
                 // A "put" call (a way to store a value for later use). Pop y, x, and v, then change the character at (x,y) in the program to the character with ASCII value v
-                const y = this.stack.pop() || 0;
-                const x = this.stack.pop() || 0;
-                const v = this.stack.pop() || 0;
+                const y = this.stack.pop();
+                const x = this.stack.pop();
+                const v = this.stack.pop();
+
+                changes |= flags.stackDirty;
+
+                if (y === undefined || x === undefined || v === undefined) {
+                    break;
+                }
 
                 this.program[y][x] = String.fromCharCode(v);
+                changes |= flags.programDirty;
                 break;
             }
             case 'g': {
@@ -318,31 +360,34 @@ export class Interpreter {
                 } else {
                     this.stack.push(0);
                 }
+                changes |= flags.stackDirty;
                 break;
             }
 
             case '&': {
                 // Ask user for a number and push it
                 this.stack.push(this.nextStdinNum());
+                changes |= flags.stackDirty | flags.stdinDirty;
                 break;
             }
             case '~': {
                 // Ask user for a character and push its ASCII value
                 const char = this.nextStdinChar() || '';
 
-                if (char.length === 0) {
+                if (!char.length) {
                     // noop
-                    return;
+                    break;
                 }
 
                 this.stack.push(char.charCodeAt(0));
+                changes |= flags.stackDirty | flags.stdinDirty;
                 break;
             }
 
             case '@': {
                 // End program
                 this.halted = true;
-                return;
+                return changes;
             }
 
             case '"': {
@@ -356,5 +401,6 @@ export class Interpreter {
         }
 
         this.nextPosition();
+        return changes;
     }
 }
