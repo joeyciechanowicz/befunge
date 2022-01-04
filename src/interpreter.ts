@@ -372,10 +372,12 @@ export class Interpreter {
             }
             case '~': {
                 // Ask user for a character and push its ASCII value
-                const char = this.nextStdinChar() || '';
+                const char = this.nextStdinChar() ;
 
-                if (!char.length) {
+                if (!char) {
                     // noop
+                    changes |= flags.stackDirty
+                    this.stack.push(-1);    
                     break;
                 }
 

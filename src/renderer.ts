@@ -17,6 +17,7 @@ export class Renderer {
         this.renderProgram();
         this.renderStdin();
         this.renderStack();
+        this.renderStdout();
     }
 
     private renderStdin() {
@@ -41,7 +42,8 @@ export class Renderer {
     private renderStack() {
         let stack = '';
         for (let i = this.interpreter.stack.length - 1; i >= 0; i--) {
-            stack += `<li class="list-group-item">${this.interpreter.stack[i]}</li>`;
+            const value = this.interpreter.stack[i];
+            stack += `<li class="list-group-item">${value}${value > 31 ? ` (<span class="fw-lighter">${String.fromCharCode(value)}</span>)` : ``}</li>`;
         }
         this.stackEl.innerHTML = stack;
     }
@@ -65,11 +67,15 @@ export class Renderer {
         this.currHighlight = document.querySelector('#highlight')!;
     }
 
+    private renderStdout() {
+        this.stdoutEl.innerHTML = this.interpreter.stdout;
+    }
+
     /**
      * 
      * @param changes bitmask of the changes from the program step
      */
-    renderTick(changes: number) {
+    renderTick(changes: number, numOperations: number) {
         if (changes & flags.programDirty) {
             this.renderProgram();
         } else {
@@ -87,7 +93,7 @@ export class Renderer {
         }
         
         if (changes & flags.stdoutDirty) {
-            this.stdoutEl.innerHTML = this.interpreter.stdout;
+            this.renderStdout();
         }
 
         if (changes & flags.stdinDirty) {
@@ -104,7 +110,7 @@ export class Renderer {
 
         if (this.ticks % 60 === 0) {
             const elapsed = (performance.now() - this.start) / 1000;
-            const rate = this.ticks / elapsed;
+            const rate = (this.ticks * numOperations) / elapsed;
             this.statsEl.innerText = `${rate.toFixed(0)} OP/S`;
         }
 

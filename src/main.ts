@@ -22,6 +22,7 @@ const stats = get('stats');
 const stdinDisplay = get('stdin');
 const stdinText = get('stdin-text') as HTMLInputElement;
 const script = get('script') as HTMLInputElement;
+const runButton = get('run');
 
 let program: Interpreter;
 let renderer: Renderer;
@@ -53,7 +54,7 @@ function restartInterval() {
 
     interval = setInterval(() => {
         const changes = program.step();
-        renderer.renderTick(changes);
+        renderer.renderTick(changes, 1);
 
         if (program.halted) {
             clearInterval(interval as NodeJS.Timeout);
@@ -70,7 +71,7 @@ startStopButton.addEventListener('click', () => {
     }
 
     const changes = program.step();
-    renderer.renderTick(changes);
+    renderer.renderTick(changes, 1);
 
     restartInterval();
     startStopButton.innerText = `Stop (${speed})`;
@@ -78,7 +79,7 @@ startStopButton.addEventListener('click', () => {
 
 get('step').addEventListener('click', () => {
     const changes = program.step();
-    renderer.renderTick(changes);
+    renderer.renderTick(changes, 1);
 });
 
 get('speed-up').addEventListener('click', () => {
@@ -93,7 +94,8 @@ get('speed-up').addEventListener('click', () => {
 });
 
 get('slow-down').addEventListener('click', () => {
-    speed = Math.floor(speed * 1.25);
+    const delta = Math.ceil(speed * 0.25);
+    speed += delta || 1;
     if (interval) {
         startStopButton.innerText = `Stop (${speed})`;
         restartInterval();
@@ -102,22 +104,60 @@ get('slow-down').addEventListener('click', () => {
     }
 });
 
-get('run').addEventListener('click', () => {
-    let count = 0;
-    const start = performance.now();
-    while (!program.halted) {
-        program.step();
-        count++;
+const BATCH_SIZE = 100000;
+let start : number;
+let total: number;
+let stop = false;
+
+function run() {
+    if (stop) {
+        return;
     }
-    const finish = performance.now();
 
-    const ms = finish - start;
-    const hz = count / ms;
+    let i;
+    let changes = 0b000;
+    for (i = 0; i < BATCH_SIZE && !program.halted; i++) {
+        changes |= program.step();
+    }
 
-    renderer.renderTick(flags.programDirty | flags.stackDirty | flags.stdinDirty | flags.stdoutDirty);
-    stats.innerText = `Took ${ms.toFixed(2)}ms, running at ${hz.toFixed(
-        0
-    )} IPS. Total of ${count} operations.`;
+    if (program.halted) {
+        const finish = performance.now();
+
+        const ms = finish - start;
+        const hz = (i + total) / (ms / 1000);
+
+        renderer.renderTick(
+            flags.programDirty |
+                flags.stackDirty |
+                flags.stdinDirty |
+                flags.stdoutDirty,
+                BATCH_SIZE
+        );
+        stats.innerText = `Took ${ms.toFixed(2)}ms, running at ${hz.toFixed(
+            0
+        )} Ops/Sec. Total of ${total + i} operations.`;
+        stop = true;
+        start = 0;
+        runButton.textContent = 'Start';
+    } else {
+        total += BATCH_SIZE;
+        renderer.renderTick(changes, BATCH_SIZE);
+        window.requestAnimationFrame(run);
+    }
+}
+runButton.addEventListener('click', () => {
+    if (start) {
+        stop = true;
+        start = 0;
+        runButton.textContent = 'Start';
+        return;
+    }
+
+    runButton.textContent = 'Stop';
+    stop = false;
+    total = 0;
+    start = performance.now();
+    run();
 });
 
 script.addEventListener('change', () => {
