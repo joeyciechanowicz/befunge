@@ -25,3 +25,7 @@ textarea {
   width: 40px;
   padding: 0;
 }
+
+textarea {
+  font-family: monospace;
+}

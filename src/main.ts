@@ -105,7 +105,7 @@ get('slow-down').addEventListener('click', () => {
 });
 
 const BATCH_SIZE = 100000;
-let start : number;
+let start: number;
 let total: number;
 let stop = false;
 
@@ -131,7 +131,7 @@ function run() {
                 flags.stackDirty |
                 flags.stdinDirty |
                 flags.stdoutDirty,
-                BATCH_SIZE
+            BATCH_SIZE
         );
         stats.innerText = `Took ${ms.toFixed(2)}ms, running at ${hz.toFixed(
             0
@@ -161,16 +161,16 @@ runButton.addEventListener('click', () => {
 });
 
 script.addEventListener('change', () => {
-    sessionStorage.setItem('program', script.value);
+    localStorage.setItem('program', script.value);
 });
 
 stdinText.addEventListener('change', () => {
-    sessionStorage.setItem('stdin', stdinText.value);
+    localStorage.setItem('stdin', stdinText.value);
 });
 
 document.addEventListener('DOMContentLoaded', () => {
-    let savedProgram = sessionStorage.getItem('program');
-    let savedStdin = sessionStorage.getItem('stdin');
+    let savedProgram = localStorage.getItem('program');
+    let savedStdin = localStorage.getItem('stdin');
 
     if (savedProgram) {
         script.value = savedProgram;
